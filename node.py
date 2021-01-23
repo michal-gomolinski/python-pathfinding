@@ -1,7 +1,8 @@
 import math
 
 class Node:
-    isOpen = True
+    isOpen = False
+    isClosed = False
     isBeginning = False
     isDestination = False
     isTraversable = True
@@ -25,6 +26,17 @@ class Node:
         self.hValue = distance
         self.resetF()
 
+    def resNode(self):
+        self.isOpen = False
+        self.isClosed = False
+        self.isPath = False
+
+        self.gValue = 100000
+        self.hValue = 0
+
+        self.parentX = -1
+        self.parentY = -1
+
 
     def resetF(self):
         self.fValue = self.gValue + self.hValue
@@ -34,7 +46,7 @@ class Node:
         print(self.cordY)
 
     def checkNode(self, x, y, g):
-        if self.isOpen == False | self.isTraversable == False:
+        if self.isClosed | self.isTraversable == False:
             return
 
         if self.fValue > g + self.hValue:
@@ -42,4 +54,4 @@ class Node:
             self.parentX = x
             self.parentY = y
             self.resetF()
-
+            self.isOpen = True
