@@ -1,7 +1,6 @@
 import node
 
 class Map:
-
     def __init__(self, width, height):
         self.nodeArray = []
         self.width = width
