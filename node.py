@@ -8,6 +8,8 @@ class Node:
     isTraversable = True
     isPath = False
 
+    weight = 1
+
     gValue = 100000
     hValue = 0
 
@@ -45,7 +47,11 @@ class Node:
         print(self.cordX, end=' ')
         print(self.cordY)
 
-    def checkNode(self, x, y, g):
+    def checkNode(self, node):
+        x = node.cordX
+        y = node.cordY
+        g = node.gValue + self.weight
+
         if self.isClosed | self.isTraversable == False:
             return
 

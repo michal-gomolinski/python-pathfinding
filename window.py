@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsView, QGraphicsScene, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QGraphicsView, QGraphicsScene, QPushButton, QSlider
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush,QPen
-from PyQt5.QtCore import QRectF, Qt, pyqtSlot
+from PyQt5.QtCore import QRectF, Qt
 import map, math, time
-import _thread
+import threading
 
 from PyQt5 import QtGui
 
@@ -15,8 +15,9 @@ class Window(QMainWindow):
     windowWidth = 800
     windowHeight = 600
 
+    buttonRunPause = QPushButton
 
-    flag = False
+    isRunning = False
 
     def __init__(self):
         super().__init__()
@@ -33,19 +34,19 @@ class Window(QMainWindow):
         self.show()
 
 
-    #@pyqtSlot()
     def handleAStarButton(self):
-        time.sleep(1)
-        try:
-            self.flag = True
-            _thread.start_new_thread(self.aStarFull,())
-        except:
-            print('error')
-        self.repaint()
+        if self.isRunning:
+            self.isRunning = False
+        else:
+            self.isRunning = True
+            self.thread = threading.Thread(target=self.aStarFull,args=())
+            self.thread.start()
+            self.update()
+
+
 
     def handleReset(self):
-        time.sleep(0.2)
-        self.flag = False
+        self.isRunning = False
         time.sleep(0.1)
         self.mapa = map.Map(10,10)
         self.begIsSet = False
@@ -53,23 +54,29 @@ class Window(QMainWindow):
         self.repaint()
 
     def handlePause(self):
-        time.sleep(0.2)
-        self.flag = False
+        self.isRunning = False
 
     def handleStop(self):
-        time.sleep(0.2)
+        self.isRunning = False
+        time.sleep(0.1)
         self.mapa.resMap()
         self.repaint()
 
+    def changeValue(self, value):
+        value = math.ceil(2.57 *value)
+        print(value)
+
     def aStarFull(self):
         flaga = True
-        while(self.flag & flaga):
+        while(self.isRunning & flaga):
             flaga = self.mapa.aStarIter()
-            time.sleep(0.2)
-            self.repaint()
-            time.sleep(0.2)
+            time.sleep(0.05)
+            self.update()
+            time.sleep(0.05)
 
         print('done')
+        self.isRunning = False
+        self.update()
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
@@ -94,46 +101,59 @@ class Window(QMainWindow):
                     print('To jest poczatek')
             else:
                 self.mapa.setTraversable(x,y)
-            self.repaint()
+            self.update()
 
     def paintEvent(self, e):
+
+        if self.isRunning:
+            self.buttonRunPause.setText('Pause')
+        else:
+            self.buttonRunPause.setText('Run')
+
         self.paintMap()
 
 
     def paintButtons(self):
-        buttonAStar = QPushButton('Find Path', self)
-        buttonAStar.show()
-        buttonAStar.setToolTip('aStar Pathfind Button')
-        buttonAStar.move(0, 0)
-        buttonAStar.clicked.connect(self.handleAStarButton)
+        dimension = self.windowHeight / 9 * 2
+
+        self.buttonRunPause = QPushButton('Find Path', self)
+        self.buttonRunPause.show()
+        self.buttonRunPause.clicked.connect(self.handleAStarButton)
+        self.buttonRunPause.setToolTip('aStar Pathfind Button')
+        self.buttonRunPause.move(self.windowHeight / 3 * 2, self.windowHeight / 3 - 2)
+        self.buttonRunPause.setFixedSize(dimension + 2,42)
+
 
         buttonReset = QPushButton('Reset', self)
         buttonReset.show()
         buttonReset.setToolTip('Reset Button')
         buttonReset.move(0, 70)
         buttonReset.clicked.connect(self.handleReset)
-
-        buttonPause = QPushButton('Pause', self)
-        buttonPause.show()
-        buttonPause.setToolTip('Pause Button')
-        buttonPause.move(0, 140)
-        buttonPause.clicked.connect(self.handlePause)
+        buttonReset.move(self.windowHeight / 3 * 2 + dimension, self.windowHeight / 3 - 2)
+        buttonReset.setFixedSize(dimension + 2, 42)
 
         buttonStop = QPushButton('Stop', self)
         buttonStop.show()
         buttonStop.setToolTip('Stop Button')
         buttonStop.move(100, 0)
         buttonStop.clicked.connect(self.handleStop)
+        buttonStop.move(self.windowHeight / 3 * 2 + dimension * 2, self.windowHeight / 3 - 2)
+        buttonStop.setFixedSize(dimension + 2, 42)
 
+        mySlider = QSlider(Qt.Horizontal, self)
+        mySlider.setGeometry(self.windowHeight / 3 * 2 + 1, self.windowHeight / 3 + 40,
+                             self.windowHeight / 3 * 2 - 1, 40)
+        mySlider.valueChanged[int].connect(self.changeValue)
+        mySlider.show()
 
     def paintMap(self):
         painter = QPainter(self)
-        painter.setPen(QPen(Qt.black, 1, Qt.SolidLine))
+        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
 
-        dimention = self.windowHeight / 3
+        dimension = self.windowHeight / 3
 
-        rectangleWidth = dimention * 2 / self.mapa.width
-        rectangleHeight = dimention * 2 / self.mapa.height
+        rectangleWidth = dimension * 2 / self.mapa.width
+        rectangleHeight = dimension * 2 / self.mapa.height
 
         for i in range(self.mapa.width):
             for j in range(self.mapa.height):
@@ -153,21 +173,22 @@ class Window(QMainWindow):
                     elif node.isClosed:
                         painter.setBrush(Qt.red)
 
-
-
-
-
-                painter.drawRect(i * rectangleWidth, j * rectangleHeight + dimention, rectangleWidth, rectangleHeight)
+                painter.drawRect(i * rectangleWidth, j * rectangleHeight + dimension, rectangleWidth, rectangleHeight)
 
                 if node.isBeginning | node.isDestination:
                     painter.setBrush(Qt.black)
-                    painter.drawLine(i * rectangleWidth, j * rectangleHeight + dimention, (i + 1) * rectangleWidth,
-                                     (j + 1) * rectangleHeight + dimention)
-                    painter.drawLine(i * rectangleWidth, (j + 1) * rectangleHeight + dimention, (i + 1) * rectangleWidth,
-                                     j * rectangleHeight + dimention)
+                    painter.drawLine(i * rectangleWidth, j * rectangleHeight + dimension, (i + 1) * rectangleWidth,
+                                     (j + 1) * rectangleHeight + dimension)
+                    painter.drawLine(i * rectangleWidth, (j + 1) * rectangleHeight + dimension, (i + 1) * rectangleWidth,
+                                     j * rectangleHeight + dimension)
 
                 if node.isBeginning:
                     font = QFont()
                     font.setPointSizeF(rectangleWidth/2)
                     painter.setFont(font)
-                    painter.drawText(i * rectangleWidth, (j + 1) * rectangleHeight + dimention,'A')
+                    painter.drawText(i * rectangleWidth, (j + 1) * rectangleHeight + dimension,'A')
+                if node.isDestination:
+                    font = QFont()
+                    font.setPointSizeF(rectangleWidth/2)
+                    painter.setFont(font)
+                    painter.drawText(i * rectangleWidth, (j + 1) * rectangleHeight + dimension,'B')

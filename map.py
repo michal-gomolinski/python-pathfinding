@@ -9,6 +9,8 @@ class Map:
         self.openNodesList = []
         self.isPathFound = False
         self.itersToComplete = 0
+        self.begNode = None
+        self.destinationNode = None
 
         for j in range(height):
             tempList = []
@@ -21,6 +23,8 @@ class Map:
         self.openNodesList.append(self.beginningNode)
         self.nodeArray[x][y].isBeginning = True
         self.nodeArray[x][y].gValue = 0
+        self.beginningNode  = self.nodeArray[x][y]
+
 
     def resMap(self):
         self.openNodesList = []
@@ -30,17 +34,17 @@ class Map:
         for j in range(self.height):
             for i in range(self.width):
                 self.nodeArray[i][j].resNode()
-                if self.nodeArray[i][j].isBeginning:
-                    self.setBeginning(i,j)
-                if self.nodeArray[i][j].isDestination:
-                    self.setDestination(i, j)
-
-
+        if self.beginningNode:
+            self.setBeginning(self.beginningNode.cordX,self.beginningNode.cordY)
+        if self.destinationNode:
+            self.setDestination(self.destinationNode.cordX, self.destinationNode.cordY)
+        print('done')
 
     def setDestination(self,x,y):
         if self.nodeArray[x][y].isBeginning:
             return False
         self.nodeArray[x][y].isDestination = True
+        self.destinationNode = self.nodeArray[x][y]
 
         for j in range(len(self.nodeArray)):
             for i in self.nodeArray[j]:
@@ -56,22 +60,18 @@ class Map:
     def aStar(self):
         flag = True
         while(flag):
-            time.sleep(0.1)
             flag = self.aStarIter()
 
 
     def aStarIter(self):
         self.itersToComplete += 1
         openNodesList = self.openNodesList
-        openNodesList.sort(key=self.sortList)
-
-        #activeNode = None
         if len(openNodesList) != 0:
+            openNodesList.sort(key=self.sortList)
             activeNode = openNodesList.pop(0)
         else:
             print("No path found")
             return False
-
         if activeNode.isDestination:
             self.isPathFound = True
             self.path(activeNode)
@@ -113,38 +113,28 @@ class Map:
 
 
     def checkNeighbor(self, node , list):
-
         x = node.cordX
         y = node.cordY
-        g = node.gValue + 1
-
-        print(x,end=' ')
-        print(y)
 
         if x != 0:
             currentNode = self.nodeArray[x - 1][y]
-            if currentNode.isTraversable & (currentNode.isClosed == False):
-                if not (currentNode in list):
-                    list.append(currentNode)
-                currentNode.checkNode(x,y,g)
+            self.doNode(node,currentNode)
         if y != 0:
             currentNode = self.nodeArray[x][y - 1]
-            if currentNode.isTraversable & (currentNode.isClosed == False):
-                if not (currentNode in list):
-                    list.append(currentNode)
-                currentNode.checkNode(x,y,g)
+            self.doNode(node,currentNode)
         if x != self.width - 1:
             currentNode = self.nodeArray[x + 1][y]
-            if currentNode.isTraversable & (currentNode.isClosed == False):
-                if not (currentNode in list):
-                    list.append(currentNode)
-                currentNode.checkNode(x,y,g)
+            self.doNode(node,currentNode)
         if y != self.height - 1:
             currentNode = self.nodeArray[x][y + 1]
-            if currentNode.isTraversable & (currentNode.isClosed == False):
-                if not(currentNode in list):
-                    list.append(currentNode)
-                currentNode.checkNode(x,y,g)
-        node.isOpen = False
-        node.isClosed = True
+            self.doNode(node,currentNode)
+        if node:
+            node.isOpen = False
+            node.isClosed = True
         return list
+
+    def doNode(self,parentNode, currentNode):
+        if currentNode.isTraversable & (currentNode.isClosed == False):
+            if not (currentNode in self.openNodesList):
+                self.openNodesList.append(currentNode)
+            currentNode.checkNode(parentNode)
