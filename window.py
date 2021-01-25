@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsView, QGraphicsScene, QPushButton, QSlider
+from PyQt5.QtWidgets import QMainWindow,QPushButton, QSlider, QLabel , QDialog
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush,QPen
-from PyQt5.QtCore import QRectF, Qt
-import map, math, time
+from PyQt5.QtCore import Qt, QEvent, QRectF
+import map, math, time, settingsDialog
 import threading
 
 from PyQt5 import QtGui
@@ -11,26 +11,49 @@ from PyQt5 import QtGui
 class Window(QMainWindow):
     begIsSet = False
     endIsSet = False
+    mouseIsPressed = False
+    drawType = 1
+    drawTypeFirstX = - 1
+    drawTypeFirstY = - 1
 
     windowWidth = 800
     windowHeight = 600
 
+    mapWidth = 20
+    mapHeight = 20
+
     buttonRunPause = QPushButton
+    buttonDrawType = QPushButton
 
     isRunning = False
+    speed = 0.5
 
     def __init__(self):
         super().__init__()
 
-        self.mapa = map.Map(10,10)
-        self.show()
+        self.mapa = map.Map(self.mapWidth,self.mapHeight)
         self.createUI()
+        self.show()
+
 
 
     def createUI(self):
         self.setWindowTitle('A* Pathfinding')
+        self.setAutoFillBackground(True)
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.paintButtons()
+
+        self.label = QLabel(self)
+        self.label.setGeometry(0, 10, self.windowWidth, self.windowHeight / 3 - 10)
+        self.label.setText("Pathfinding Project")
+
+        font  = QFont()
+        font.setPixelSize(self.windowHeight / 8)
+        font.setBold(True)
+        self.label.setFont(font)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.show()
+
         self.show()
 
 
@@ -48,7 +71,7 @@ class Window(QMainWindow):
     def handleReset(self):
         self.isRunning = False
         time.sleep(0.1)
-        self.mapa = map.Map(10,10)
+        self.mapa = map.Map(self.mapWidth,self.mapHeight)
         self.begIsSet = False
         self.endIsSet = False
         self.repaint()
@@ -62,32 +85,49 @@ class Window(QMainWindow):
         self.mapa.resMap()
         self.repaint()
 
+    def handleDrawType(self):
+        if self.drawType == 1:
+            self.drawType = 2
+        else:
+            self.drawType = 1
+
     def changeValue(self, value):
-        value = math.ceil(2.57 *value)
-        print(value)
+        self.speed =  (100 - value) / 200
+        print(self.speed)
 
     def aStarFull(self):
         flaga = True
         while(self.isRunning & flaga):
             flaga = self.mapa.aStarIter()
-            time.sleep(0.05)
+            time.sleep(self.speed)
             self.update()
-            time.sleep(0.05)
+            time.sleep(self.speed)
 
         print('done')
         self.isRunning = False
         self.update()
+    # def mouseReleaseEvent(self, e):
+    #     if e.buttons() == QtCore.Qt.LeftButton:
+    #         print('asd')
+    #         self.mouseIsPressed = False
+
+    def mouseHoldTest(self):
+        while (self.mouseIsPressed):
+            time.sleep(1)
+            print(self.mouseIsPressed )
+            # print(event.pos().x() +''+ event.pos().y())
+
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
+            self.mouseIsPressed = True
+            dimension = self.windowHeight / 3
 
-            dimention = self.windowHeight / 3
-
-            rectangleWidth = dimention * 2 / self.mapa.width
-            rectangleHeight = dimention * 2 / self.mapa.height
+            rectangleWidth = dimension * 2 / self.mapa.width
+            rectangleHeight = dimension * 2 / self.mapa.height
 
             x = math.floor(event.pos().x() / rectangleWidth)
-            y = math.floor((event.pos().y() - dimention) / rectangleHeight)
+            y = math.floor((event.pos().y() - dimension) / rectangleHeight)
 
             if (y < 0)| (x < 0)| (y > self.mapa.height - 1) | (x > self.mapa.width - 1):
                 print('error')
@@ -100,8 +140,33 @@ class Window(QMainWindow):
                 else:
                     print('To jest poczatek')
             else:
-                self.mapa.setTraversable(x,y)
+                if(self.drawType == 1):
+                    self.mapa.setTraversable(x,y)
+                elif(self.drawType == 2):
+                    if (self.drawTypeFirstX >= 0) & (self.drawTypeFirstY >= 0):
+                        howToSet = self.mapa.nodeArray[self.drawTypeFirstX][self.drawTypeFirstY].isTraversable
+
+                        incrementX = 1
+                        incrementY = 1
+
+                        if x > self.drawTypeFirstX:
+                            incrementX = -1
+                        if y > self.drawTypeFirstY:
+                            incrementY = -1
+
+                        for i in range (x, self.drawTypeFirstX + incrementX, incrementX):
+                            for j in range(y  , self.drawTypeFirstY + incrementY, incrementY):
+                                self.mapa.setTraversableFill(i, j, howToSet)
+                        self.drawTypeFirstX = -1
+                        self.drawTypeFirstY = -1
+                    else:
+                        self.mapa.setTraversable(x, y)
+                        self.drawTypeFirstX = x
+                        self.drawTypeFirstY = y
+
             self.update()
+
+
 
     def paintEvent(self, e):
 
@@ -110,6 +175,10 @@ class Window(QMainWindow):
         else:
             self.buttonRunPause.setText('Run')
 
+        if self.drawType == 1:
+            self.buttonDrawType.setText('Single Draw')
+        else:
+            self.buttonDrawType.setText('Fill Draw')
         self.paintMap()
 
 
@@ -127,24 +196,44 @@ class Window(QMainWindow):
         buttonReset = QPushButton('Reset', self)
         buttonReset.show()
         buttonReset.setToolTip('Reset Button')
-        buttonReset.move(0, 70)
         buttonReset.clicked.connect(self.handleReset)
-        buttonReset.move(self.windowHeight / 3 * 2 + dimension, self.windowHeight / 3 - 2)
-        buttonReset.setFixedSize(dimension + 2, 42)
+        buttonReset.move(self.windowHeight / 3 * 2, self.windowHeight / 3 - 2 +40)
+        buttonReset.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
 
         buttonStop = QPushButton('Stop', self)
         buttonStop.show()
         buttonStop.setToolTip('Stop Button')
-        buttonStop.move(100, 0)
         buttonStop.clicked.connect(self.handleStop)
-        buttonStop.move(self.windowHeight / 3 * 2 + dimension * 2, self.windowHeight / 3 - 2)
-        buttonStop.setFixedSize(dimension + 2, 42)
+        buttonStop.move(self.windowHeight / 3 * 2 + self.windowHeight / 6 * 2, self.windowHeight / 3 - 2 +40)
+        buttonStop.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
 
         mySlider = QSlider(Qt.Horizontal, self)
-        mySlider.setGeometry(self.windowHeight / 3 * 2 + 1, self.windowHeight / 3 + 40,
-                             self.windowHeight / 3 * 2 - 1, 40)
+        mySlider.setGeometry(self.windowHeight / 3 * 2 + 1 +dimension, self.windowHeight / 3,
+                             dimension * 2, 40)
         mySlider.valueChanged[int].connect(self.changeValue)
         mySlider.show()
+
+        # buttonTraversableWeight = QPushButton('Traversable', self)
+        # #buttonTraversableWeight.show()
+        # buttonTraversableWeight.setToolTip('Choose if you want to make a node untraversable or change '
+        #                                    'the weight of the node')
+        # buttonTraversableWeight.clicked.connect(self.handleStop)
+        # buttonTraversableWeight.move(self.windowHeight / 3 * 2, self.windowHeight / 3 + 40 - 2)
+        # buttonTraversableWeight.setFixedSize(dimension + 2, 42)
+
+        self.buttonDrawType = QPushButton('Single Draw', self)
+        self.buttonDrawType.show()
+        self.buttonDrawType.setToolTip('Choose the draw type')
+        self.buttonDrawType.clicked.connect(self.handleDrawType)
+        self.buttonDrawType.move(self.windowHeight / 3 * 2, self.windowHeight / 3 + 80 - 2)
+        self.buttonDrawType.setFixedSize(dimension + 2, 42)
+
+        self.openSettings = QPushButton('Settings', self)
+        self.openSettings.show()
+        self.openSettings.setToolTip('Click to open settings window')
+        self.openSettings.clicked.connect(self.handleSetting)
+        self.openSettings.move(self.windowHeight / 3 * 2, self.windowHeight / 3 + 120 - 2)
+        self.openSettings.setFixedSize(dimension + 2, 42)
 
     def paintMap(self):
         painter = QPainter(self)
@@ -165,6 +254,8 @@ class Window(QMainWindow):
                     painter.setBrush(Qt.darkYellow)
                 elif node.isPath:
                     painter.setBrush(Qt.yellow)
+                elif (node.cordX == self.drawTypeFirstX) & (node.cordY == self.drawTypeFirstY):
+                    painter.setBrush(Qt.gray)
                 elif not node.isTraversable:
                     painter.setBrush(Qt.black)
                 elif not self.mapa.isPathFound:
@@ -192,3 +283,9 @@ class Window(QMainWindow):
                     font.setPointSizeF(rectangleWidth/2)
                     painter.setFont(font)
                     painter.drawText(i * rectangleWidth, (j + 1) * rectangleHeight + dimension,'B')
+
+    def handleSetting(self):
+        dialog = QDialog()
+        dialog = settingsDialog.Dialog(self)
+        dialog.exec_()
+        dialog.show()

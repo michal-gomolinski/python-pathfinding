@@ -11,6 +11,7 @@ class Map:
         self.itersToComplete = 0
         self.begNode = None
         self.destinationNode = None
+        self.aStarMethod = False
 
         for j in range(height):
             tempList = []
@@ -54,8 +55,14 @@ class Map:
     def setTraversable(self,x,y):
         self.nodeArray[x][y].isTraversable = not self.nodeArray[x][y].isTraversable
 
-    def sortList(self,e):
+    def setTraversableFill(self,x,y,bool):
+        self.nodeArray[x][y].isTraversable = bool
+
+    def sortListAStar(self,e):
         return e.fValue
+
+    def sortListDijkstra(self,e):
+        return e.gValue
 
     def aStar(self):
         flag = True
@@ -67,7 +74,10 @@ class Map:
         self.itersToComplete += 1
         openNodesList = self.openNodesList
         if len(openNodesList) != 0:
-            openNodesList.sort(key=self.sortList)
+            if self.aStarMethod:
+                openNodesList.sort(key=self.sortListAStar)
+            else:
+                openNodesList.sort(key=self.sortListDijkstra)
             activeNode = openNodesList.pop(0)
         else:
             print("No path found")
