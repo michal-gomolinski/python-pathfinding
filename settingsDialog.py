@@ -1,38 +1,56 @@
 from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
                              QDialogButtonBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout,
                              QLabel, QLineEdit, QMenu, QMenuBar, QPushButton, QSpinBox, QTextEdit,
-                             QVBoxLayout, QCheckBox, )
-
+                             QVBoxLayout, QCheckBox, QMessageBox)
+import window
 class Dialog(QDialog):
 
     def __init__(self,mainWindow):
         super(Dialog, self).__init__()
 
-        self.algorithSettings = QGroupBox("Algorith Settings")
+        self.mainWindow = mainWindow
+
+        self.algorithmSettings = QGroupBox("Algorithm Settings")
         self.dimensionSettings = QGroupBox("Map Dimension Settings")
 
         topLayout = QFormLayout()
 
-        topLayout.addRow("Algorith Type:", QComboBox())
-        topLayout.addRow("Heuristic Type:", QComboBox())
+        self.algorithmType = QComboBox()
+        self.algorithmType.addItem('A*')
+        self.algorithmType.addItem('Dijkstra')
+        self.algorithmType.setCurrentIndex(self.mainWindow.algorithmType)
+
+        self.heuristicType = QComboBox()
+        self.heuristicType.addItem('Euclidean')
+        self.heuristicType.addItem('Manhattan')
+        self.heuristicType.setCurrentIndex(self.mainWindow.mapa.heuristicType)
+
+        topLayout.addRow("Algorith Type:", self.algorithmType)
+        topLayout.addRow("Heuristic Type:", self.heuristicType)
 
         optionsLayout = QHBoxLayout()
 
-        optionsLayout.addWidget(QSpinBox())
-        optionsLayout.addWidget(QSpinBox())
+        self.widthSpin = QSpinBox()
+        self.widthSpin.setRange(10,100)
+        self.widthSpin.setValue(self.mainWindow.mapWidth)
+
+        self.heightSpin = QSpinBox()
+        self.heightSpin.setRange(10,100)
+        self.heightSpin.setValue(self.mainWindow.mapHeight)
+
+        optionsLayout.addWidget(self.widthSpin)
+        optionsLayout.addWidget(self.heightSpin)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 
 
-
-
-        self.algorithSettings.setLayout(topLayout)
+        self.algorithmSettings.setLayout(topLayout)
         self.dimensionSettings.setLayout(optionsLayout)
 
         actualLayout = QVBoxLayout()
-        actualLayout.addWidget(self.algorithSettings)
+        actualLayout.addWidget(self.algorithmSettings)
         actualLayout.addWidget(self.dimensionSettings)
         actualLayout.addWidget(buttonBox)
 
@@ -41,5 +59,16 @@ class Dialog(QDialog):
         self.setWindowTitle("Settings")
 
 
+    def accept(self) -> None:
+        self.mainWindow.algorithmType = self.algorithmType.currentIndex()
+        self.mainWindow.mapa.heuristicType = self.heuristicType.currentIndex()
+        self.mainWindow.mapa.resetH()
+
+        if (self.widthSpin.value() != self.mainWindow.mapWidth) | (self.heightSpin.value() != self.mainWindow.mapHeight):
+            self.mainWindow.mapWidth = self.widthSpin.value()
+            self.mainWindow.mapHeight = self.heightSpin.value()
+            self.mainWindow.handleReset()
+
+        self.close()
 
 

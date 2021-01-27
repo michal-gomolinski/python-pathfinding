@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QMainWindow,QPushButton, QSlider, QLabel , QDialog
+from PyQt5.QtWidgets import (QMainWindow, QPushButton, QSlider, QLabel, QDialog,
+                             QVBoxLayout, QGroupBox, QHBoxLayout, QStackedWidget, QGraphicsScene, QGraphicsView)
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush,QPen
-from PyQt5.QtCore import Qt, QEvent, QRectF
+from PyQt5.QtCore import Qt, QEvent, QRectF, QRect
 import map, math, time, settingsDialog
-import threading
+import threading, creditsDialog
 
 from PyQt5 import QtGui
 
@@ -18,6 +19,9 @@ class Window(QMainWindow):
 
     windowWidth = 800
     windowHeight = 600
+
+    algorithmType = 0
+    heuristicType = 0
 
     mapWidth = 20
     mapHeight = 20
@@ -98,7 +102,7 @@ class Window(QMainWindow):
     def aStarFull(self):
         flaga = True
         while(self.isRunning & flaga):
-            flaga = self.mapa.aStarIter()
+            flaga = self.mapa.aStarIter(self.algorithmType)
             time.sleep(self.speed)
             self.update()
             time.sleep(self.speed)
@@ -182,6 +186,10 @@ class Window(QMainWindow):
         self.paintMap()
 
 
+
+
+
+
     def paintButtons(self):
         dimension = self.windowHeight / 9 * 2
 
@@ -192,26 +200,25 @@ class Window(QMainWindow):
         self.buttonRunPause.move(self.windowHeight / 3 * 2, self.windowHeight / 3 - 2)
         self.buttonRunPause.setFixedSize(dimension + 2,42)
 
+        self.buttonReset = QPushButton('Reset', self)
+        self.buttonReset.show()
+        self.buttonReset.setToolTip('Reset Button')
+        self.buttonReset.clicked.connect(self.handleReset)
+        self.buttonReset.move(self.windowHeight / 3 * 2, self.windowHeight / 3 - 2 +40)
+        self.buttonReset.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
 
-        buttonReset = QPushButton('Reset', self)
-        buttonReset.show()
-        buttonReset.setToolTip('Reset Button')
-        buttonReset.clicked.connect(self.handleReset)
-        buttonReset.move(self.windowHeight / 3 * 2, self.windowHeight / 3 - 2 +40)
-        buttonReset.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
+        self.buttonStop = QPushButton('Stop', self)
+        self.buttonStop.show()
+        self.buttonStop.setToolTip('Stop Button')
+        self.buttonStop.clicked.connect(self.handleStop)
+        self.buttonStop.move(self.windowHeight / 3 * 2 + self.windowHeight / 6 * 2, self.windowHeight / 3 - 2 +40)
+        self.buttonStop.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
 
-        buttonStop = QPushButton('Stop', self)
-        buttonStop.show()
-        buttonStop.setToolTip('Stop Button')
-        buttonStop.clicked.connect(self.handleStop)
-        buttonStop.move(self.windowHeight / 3 * 2 + self.windowHeight / 6 * 2, self.windowHeight / 3 - 2 +40)
-        buttonStop.setFixedSize(self.windowHeight / 6 * 2 + 2, 42)
-
-        mySlider = QSlider(Qt.Horizontal, self)
-        mySlider.setGeometry(self.windowHeight / 3 * 2 + 1 +dimension, self.windowHeight / 3,
+        self.mySlider = QSlider(Qt.Horizontal, self)
+        self.mySlider.setGeometry(self.windowHeight / 3 * 2 + 1 +dimension, self.windowHeight / 3,
                              dimension * 2, 40)
-        mySlider.valueChanged[int].connect(self.changeValue)
-        mySlider.show()
+        self.mySlider.valueChanged[int].connect(self.changeValue)
+        self.mySlider.show()
 
         # buttonTraversableWeight = QPushButton('Traversable', self)
         # #buttonTraversableWeight.show()
@@ -226,14 +233,28 @@ class Window(QMainWindow):
         self.buttonDrawType.setToolTip('Choose the draw type')
         self.buttonDrawType.clicked.connect(self.handleDrawType)
         self.buttonDrawType.move(self.windowHeight / 3 * 2, self.windowHeight / 3 + 80 - 2)
-        self.buttonDrawType.setFixedSize(dimension + 2, 42)
+        self.buttonDrawType.setFixedSize(dimension * 3 + 2, 42)
 
         self.openSettings = QPushButton('Settings', self)
         self.openSettings.show()
         self.openSettings.setToolTip('Click to open settings window')
         self.openSettings.clicked.connect(self.handleSetting)
-        self.openSettings.move(self.windowHeight / 3 * 2, self.windowHeight / 3 + 120 - 2)
-        self.openSettings.setFixedSize(dimension + 2, 42)
+        self.openSettings.move(self.windowHeight / 3 * 2 + 40, self.windowHeight - 150 - 2)
+        self.openSettings.setFixedSize(dimension * 3 - 78, 42)
+
+        self.buttonCredits = QPushButton('Credits', self)
+        self.buttonCredits.show()
+        self.buttonCredits.setToolTip('Click to open credits window')
+        self.buttonCredits.clicked.connect(self.handleCredits)
+        self.buttonCredits.move(self.windowHeight / 3 * 2 + 40, self.windowHeight - 100 - 2)
+        self.buttonCredits.setFixedSize(dimension * 3 - 78, 42)
+
+        self.buttonClose = QPushButton('Close', self)
+        self.buttonClose.show()
+        self.buttonClose.setToolTip('Close application')
+        self.buttonClose.clicked.connect(self.close)
+        self.buttonClose.move(self.windowHeight / 3 * 2 + 40, self.windowHeight - 50 - 2)
+        self.buttonClose.setFixedSize(dimension * 3 - 78, 42)
 
     def paintMap(self):
         painter = QPainter(self)
@@ -287,5 +308,11 @@ class Window(QMainWindow):
     def handleSetting(self):
         dialog = QDialog()
         dialog = settingsDialog.Dialog(self)
+        dialog.exec_()
+        dialog.show()
+
+    def handleCredits(self):
+        dialog = QDialog()
+        dialog = creditsDialog.CreditsDialog()
         dialog.exec_()
         dialog.show()

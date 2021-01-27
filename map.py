@@ -11,7 +11,8 @@ class Map:
         self.itersToComplete = 0
         self.begNode = None
         self.destinationNode = None
-        self.aStarMethod = False
+        self.heuristicType = 0
+        #self.aStarMethod = False
 
         for j in range(height):
             tempList = []
@@ -47,10 +48,22 @@ class Map:
         self.nodeArray[x][y].isDestination = True
         self.destinationNode = self.nodeArray[x][y]
 
+        self.resetH()
+        return True
+
+    def resetH(self):
+        if self.destinationNode == None:
+            return
+
+        x = self.destinationNode.cordX
+        y = self.destinationNode.cordY
+
         for j in range(len(self.nodeArray)):
             for i in self.nodeArray[j]:
-                i.hEuc(x,y)
-        return True
+                if self.heuristicType == 0:
+                    i.hEuc(x, y)
+                else:
+                    i.hMan(x, y)
 
     def setTraversable(self,x,y):
         self.nodeArray[x][y].isTraversable = not self.nodeArray[x][y].isTraversable
@@ -70,11 +83,11 @@ class Map:
             flag = self.aStarIter()
 
 
-    def aStarIter(self):
+    def aStarIter(self,algorithmType):
         self.itersToComplete += 1
         openNodesList = self.openNodesList
         if len(openNodesList) != 0:
-            if self.aStarMethod:
+            if algorithmType == 0:
                 openNodesList.sort(key=self.sortListAStar)
             else:
                 openNodesList.sort(key=self.sortListDijkstra)

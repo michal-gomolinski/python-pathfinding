@@ -28,6 +28,11 @@ class Node:
         self.hValue = distance
         self.resetF()
 
+    def hMan(self,xDestination , yDestination):
+        distance = abs(xDestination - self.cordX) + abs(yDestination - self.cordY)
+        self.hValue = distance
+        self.resetF()
+
     def resNode(self):
         self.isOpen = False
         self.isClosed = False
@@ -55,7 +60,7 @@ class Node:
         if self.isClosed | self.isTraversable == False:
             return
 
-        if self.fValue > g + self.hValue:
+        if self.gValue > g:
             self.gValue = g
             self.parentX = x
             self.parentY = y
