@@ -16,6 +16,7 @@ class Window(QMainWindow):
     drawType = 1
     drawTypeFirstX = - 1
     drawTypeFirstY = - 1
+    parentTraversable = True
 
     windowWidth = 800
     windowHeight = 600
@@ -96,8 +97,7 @@ class Window(QMainWindow):
             self.drawType = 1
 
     def changeValue(self, value):
-        self.speed =  (100 - value) / 200
-        print(self.speed)
+        self.speed = (100 - value) / 200
 
     def aStarFull(self):
         flaga = True
@@ -106,25 +106,28 @@ class Window(QMainWindow):
             time.sleep(self.speed)
             self.update()
             time.sleep(self.speed)
-
         print('done')
         self.isRunning = False
         self.update()
-    # def mouseReleaseEvent(self, e):
-    #     if e.buttons() == QtCore.Qt.LeftButton:
-    #         print('asd')
-    #         self.mouseIsPressed = False
 
-    def mouseHoldTest(self):
-        while (self.mouseIsPressed):
-            time.sleep(1)
-            print(self.mouseIsPressed )
-            # print(event.pos().x() +''+ event.pos().y())
+    def mouseMoveEvent(self, event):
+        dimension = self.windowHeight / 3
 
+        rectangleWidth = dimension * 2 / self.mapa.width
+        rectangleHeight = dimension * 2 / self.mapa.height
+
+        x = math.floor(event.pos().x() / rectangleWidth)
+        y = math.floor((event.pos().y() - dimension) / rectangleHeight)
+
+        if ((y < 0) | (x < 0) | (y > self.mapa.height - 1) | (x > self.mapa.width - 1) | (self.begIsSet == False)
+                              | (self.endIsSet == False)):
+            print('error')
+        elif self.drawType == 1:
+            self.mapa.setTraversableFill(x, y,self.parentTraversable)
+        self.update()
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
-            self.mouseIsPressed = True
             dimension = self.windowHeight / 3
 
             rectangleWidth = dimension * 2 / self.mapa.width
@@ -134,7 +137,7 @@ class Window(QMainWindow):
             y = math.floor((event.pos().y() - dimension) / rectangleHeight)
 
             if (y < 0)| (x < 0)| (y > self.mapa.height - 1) | (x > self.mapa.width - 1):
-                print('error')
+                return
             elif self.begIsSet == False:
                 self.mapa.setBeginning(x,y)
                 self.begIsSet = True
@@ -145,7 +148,8 @@ class Window(QMainWindow):
                     print('To jest poczatek')
             else:
                 if(self.drawType == 1):
-                    self.mapa.setTraversable(x,y)
+                    self.parentTraversable = not self.mapa.nodeArray[x][y].isTraversable
+                    self.mapa.setTraversableFill(x,y,self.parentTraversable)
                 elif(self.drawType == 2):
                     if (self.drawTypeFirstX >= 0) & (self.drawTypeFirstY >= 0):
                         howToSet = self.mapa.nodeArray[self.drawTypeFirstX][self.drawTypeFirstY].isTraversable
