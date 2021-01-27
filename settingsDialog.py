@@ -12,6 +12,7 @@ class Dialog(QDialog):
 
         self.algorithmSettings = QGroupBox("Algorithm Settings")
         self.dimensionSettings = QGroupBox("Map Dimension Settings")
+        self.resolutionSettings = QGroupBox("Resolution Settings")
 
         topLayout = QFormLayout()
 
@@ -34,12 +35,14 @@ class Dialog(QDialog):
         self.widthSpin.setRange(10,100)
         self.widthSpin.setValue(self.mainWindow.mapWidth)
 
-        self.heightSpin = QSpinBox()
-        self.heightSpin.setRange(10,100)
-        self.heightSpin.setValue(self.mainWindow.mapHeight)
+        # self.heightSpin = QSpinBox()
+        # self.heightSpin.setRange(10,100)
+        # self.heightSpin.setValue(self.mainWindow.mapHeight)
 
         optionsLayout.addWidget(self.widthSpin)
-        optionsLayout.addWidget(self.heightSpin)
+
+
+        #optionsLayout.addWidget(self.heightSpin)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
@@ -49,9 +52,11 @@ class Dialog(QDialog):
         self.algorithmSettings.setLayout(topLayout)
         self.dimensionSettings.setLayout(optionsLayout)
 
+
         actualLayout = QVBoxLayout()
         actualLayout.addWidget(self.algorithmSettings)
         actualLayout.addWidget(self.dimensionSettings)
+
         actualLayout.addWidget(buttonBox)
 
         self.setLayout(actualLayout)
@@ -64,9 +69,9 @@ class Dialog(QDialog):
         self.mainWindow.mapa.heuristicType = self.heuristicType.currentIndex()
         self.mainWindow.mapa.resetH()
 
-        if (self.widthSpin.value() != self.mainWindow.mapWidth) | (self.heightSpin.value() != self.mainWindow.mapHeight):
+        if (self.widthSpin.value() != self.mainWindow.mapWidth):
             self.mainWindow.mapWidth = self.widthSpin.value()
-            self.mainWindow.mapHeight = self.heightSpin.value()
+            self.mainWindow.mapHeight = self.widthSpin.value()
             self.mainWindow.handleReset()
 
         self.close()

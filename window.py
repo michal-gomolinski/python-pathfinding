@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QSlider, QLabel, QDialog,
-                             QVBoxLayout, QGroupBox, QHBoxLayout, QStackedWidget, QGraphicsScene, QGraphicsView)
+                             QVBoxLayout, QGroupBox, QHBoxLayout, QStackedWidget, QGraphicsScene, QGraphicsView,
+                             QStatusBar)
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush,QPen
 from PyQt5.QtCore import Qt, QEvent, QRectF, QRect
@@ -47,6 +48,7 @@ class Window(QMainWindow):
         self.setAutoFillBackground(True)
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.paintButtons()
+        self.paintLabel()
 
         self.label = QLabel(self)
         self.label.setGeometry(0, 10, self.windowWidth, self.windowHeight / 3 - 10)
@@ -65,7 +67,9 @@ class Window(QMainWindow):
     def handleAStarButton(self):
         if self.isRunning:
             self.isRunning = False
+            self.status.setText("Pathfinding algorithm was paused")
         else:
+            self.status.setText("Pathfinding algorithm has started")
             self.isRunning = True
             self.thread = threading.Thread(target=self.aStarFull,args=())
             self.thread.start()
@@ -75,6 +79,7 @@ class Window(QMainWindow):
 
     def handleReset(self):
         self.isRunning = False
+        self.status.setText('Map reset \nChoose your start node')
         time.sleep(0.1)
         self.mapa = map.Map(self.mapWidth,self.mapHeight)
         self.begIsSet = False
@@ -85,6 +90,7 @@ class Window(QMainWindow):
         self.isRunning = False
 
     def handleStop(self):
+        self.status.setText('Pathfinding algorithm stopped \nModify your map or start pathfinding algorithm')
         self.isRunning = False
         time.sleep(0.1)
         self.mapa.resMap()
@@ -100,13 +106,18 @@ class Window(QMainWindow):
         self.speed = (100 - value) / 200
 
     def aStarFull(self):
-        flaga = True
-        while(self.isRunning & flaga):
+        flaga = 0
+        while self.isRunning & (flaga == 0):
             flaga = self.mapa.aStarIter(self.algorithmType)
             time.sleep(self.speed)
             self.update()
             time.sleep(self.speed)
-        print('done')
+        if flaga < 0:
+            self.status.setText("No path found")
+        elif flaga > 0:
+            self.status.setText('Path found after: ' + str(flaga) + " iterations")
+        else:
+            print('Paused')
         self.isRunning = False
         self.update()
 
@@ -121,7 +132,7 @@ class Window(QMainWindow):
 
         if ((y < 0) | (x < 0) | (y > self.mapa.height - 1) | (x > self.mapa.width - 1) | (self.begIsSet == False)
                               | (self.endIsSet == False)):
-            print('error')
+            return
         elif self.drawType == 1:
             self.mapa.setTraversableFill(x, y,self.parentTraversable)
         self.update()
@@ -141,9 +152,11 @@ class Window(QMainWindow):
             elif self.begIsSet == False:
                 self.mapa.setBeginning(x,y)
                 self.begIsSet = True
+                self.status.setText('Choose your destination node')
             elif self.endIsSet == False:
                 if self.mapa.setDestination(x, y):
                     self.endIsSet = True
+                    self.status.setText('Modify your map or start pathfinding algorithm')
                 else:
                     print('To jest poczatek')
             else:
@@ -174,10 +187,15 @@ class Window(QMainWindow):
 
             self.update()
 
+    def paintLabel(self):
+        self.status = QLabel(self)
+        if self.begIsSet == False:
+            self.status.setText('Choose your start node')
 
+        self.status.setGeometry(int(self.windowHeight / 3 * 2 + 10), int(self.windowHeight / 3  + 98),400,100)
+        self.status.show()
 
     def paintEvent(self, e):
-
         if self.isRunning:
             self.buttonRunPause.setText('Pause')
         else:
@@ -187,12 +205,8 @@ class Window(QMainWindow):
             self.buttonDrawType.setText('Single Draw')
         else:
             self.buttonDrawType.setText('Fill Draw')
+
         self.paintMap()
-
-
-
-
-
 
     def paintButtons(self):
         dimension = self.windowHeight / 9 * 2
@@ -221,6 +235,8 @@ class Window(QMainWindow):
         self.mySlider = QSlider(Qt.Horizontal, self)
         self.mySlider.setGeometry(self.windowHeight / 3 * 2 + 1 +dimension, self.windowHeight / 3,
                              dimension * 2, 40)
+        self.mySlider.setToolTip("Modify the speed of Pathfinding algorithm")
+        self.mySlider.setValue(50)
         self.mySlider.valueChanged[int].connect(self.changeValue)
         self.mySlider.show()
 

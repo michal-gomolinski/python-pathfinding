@@ -40,7 +40,6 @@ class Map:
             self.setBeginning(self.beginningNode.cordX,self.beginningNode.cordY)
         if self.destinationNode:
             self.setDestination(self.destinationNode.cordX, self.destinationNode.cordY)
-        print('done')
 
     def setDestination(self,x,y):
         if self.nodeArray[x][y].isBeginning:
@@ -66,10 +65,12 @@ class Map:
                     i.hMan(x, y)
 
     def setTraversable(self,x,y):
-        self.nodeArray[x][y].isTraversable = not self.nodeArray[x][y].isTraversable
+        if self.nodeArray[x][y].isDestination != True:
+            self.nodeArray[x][y].isTraversable = not self.nodeArray[x][y].isTraversable
 
     def setTraversableFill(self,x,y,bool):
-        self.nodeArray[x][y].isTraversable = bool
+        if self.nodeArray[x][y].isDestination != True:
+            self.nodeArray[x][y].isTraversable = bool
 
     def sortListAStar(self,e):
         return e.fValue
@@ -93,18 +94,16 @@ class Map:
                 openNodesList.sort(key=self.sortListDijkstra)
             activeNode = openNodesList.pop(0)
         else:
-            print("No path found")
-            return False
+            return -1
         if activeNode.isDestination:
             self.isPathFound = True
             self.path(activeNode)
-            print('Found after ' + str(self.itersToComplete) + ' iterations')
-            return False
+            return self.itersToComplete
 
         openNodesList = self.checkNeighbor(activeNode, openNodesList)
         self.openNodesList = openNodesList
 
-        return True
+        return 0
 
     def path(self,node):
         if node.isBeginning:

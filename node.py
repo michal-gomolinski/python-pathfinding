@@ -57,7 +57,7 @@ class Node:
         y = node.cordY
         g = node.gValue + self.weight
 
-        if self.isClosed | self.isTraversable == False:
+        if self.isClosed | (self.isTraversable == False) :
             return
 
         if self.gValue > g:
