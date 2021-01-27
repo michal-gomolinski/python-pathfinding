@@ -1,5 +1,4 @@
 import node
-import time
 class Map:
     def __init__(self, width, height):
         self.nodeArray = []
@@ -26,7 +25,6 @@ class Map:
         self.nodeArray[x][y].isBeginning = True
         self.nodeArray[x][y].gValue = 0
         self.beginningNode  = self.nodeArray[x][y]
-
 
     def resMap(self):
         self.openNodesList = []

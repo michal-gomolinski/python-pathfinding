@@ -1,7 +1,4 @@
-from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
-                             QDialogButtonBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout,
-                             QLabel, QLineEdit, QMenu, QMenuBar, QPushButton, QSpinBox, QTextEdit,
-                             QVBoxLayout, QCheckBox, QMessageBox)
+from PyQt5.QtWidgets import (QDialog , QDialogButtonBox , QGroupBox , QLabel , QVBoxLayout)
 
 class CreditsDialog(QDialog):
     def __init__(self):

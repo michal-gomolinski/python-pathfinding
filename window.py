@@ -1,13 +1,10 @@
-from PyQt5.QtWidgets import (QMainWindow, QPushButton, QSlider, QLabel, QDialog,
-                             QVBoxLayout, QGroupBox, QHBoxLayout, QStackedWidget, QGraphicsScene, QGraphicsView,
-                             QStatusBar)
+from PyQt5.QtWidgets import (QMainWindow, QPushButton, QSlider, QLabel)
 from PyQt5 import QtCore
-from PyQt5.QtGui import QPainter, QColor, QFont, QBrush,QPen
-from PyQt5.QtCore import Qt, QEvent, QRectF, QRect
+from PyQt5.QtGui import QPainter, QFont,QPen
+from PyQt5.QtCore import Qt
 import map, math, time, settingsDialog
 import threading, creditsDialog
 
-from PyQt5 import QtGui
 
 
 class Window(QMainWindow):
@@ -19,8 +16,8 @@ class Window(QMainWindow):
     drawTypeFirstY = - 1
     parentTraversable = True
 
-    windowWidth = 800
-    windowHeight = 600
+    windowWidth = 1200
+    windowHeight = 900
 
     algorithmType = 0
     heuristicType = 0
@@ -32,7 +29,7 @@ class Window(QMainWindow):
     buttonDrawType = QPushButton
 
     isRunning = False
-    speed = 0.5
+    speed = 0.25
 
     def __init__(self):
         super().__init__()
@@ -326,13 +323,11 @@ class Window(QMainWindow):
                     painter.drawText(i * rectangleWidth, (j + 1) * rectangleHeight + dimension,'B')
 
     def handleSetting(self):
-        dialog = QDialog()
         dialog = settingsDialog.Dialog(self)
         dialog.exec_()
         dialog.show()
 
     def handleCredits(self):
-        dialog = QDialog()
         dialog = creditsDialog.CreditsDialog()
         dialog.exec_()
         dialog.show()

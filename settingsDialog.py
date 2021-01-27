@@ -1,7 +1,5 @@
-from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
-                             QDialogButtonBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout,
-                             QLabel, QLineEdit, QMenu, QMenuBar, QPushButton, QSpinBox, QTextEdit,
-                             QVBoxLayout, QCheckBox, QMessageBox)
+from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox, QHBoxLayout,
+                             QSpinBox, QVBoxLayout)
 import window
 class Dialog(QDialog):
 
@@ -14,7 +12,7 @@ class Dialog(QDialog):
         self.dimensionSettings = QGroupBox("Map Dimension Settings")
         self.resolutionSettings = QGroupBox("Resolution Settings")
 
-        topLayout = QFormLayout()
+        self.topLayout = QFormLayout()
 
         self.algorithmType = QComboBox()
         self.algorithmType.addItem('A*')
@@ -26,8 +24,8 @@ class Dialog(QDialog):
         self.heuristicType.addItem('Manhattan')
         self.heuristicType.setCurrentIndex(self.mainWindow.mapa.heuristicType)
 
-        topLayout.addRow("Algorith Type:", self.algorithmType)
-        topLayout.addRow("Heuristic Type:", self.heuristicType)
+        self.topLayout.addRow("Algorith Type:", self.algorithmType)
+        self.topLayout.addRow("Heuristic Type:", self.heuristicType)
 
         optionsLayout = QHBoxLayout()
 
@@ -49,7 +47,7 @@ class Dialog(QDialog):
         buttonBox.rejected.connect(self.reject)
 
 
-        self.algorithmSettings.setLayout(topLayout)
+        self.algorithmSettings.setLayout(self.topLayout)
         self.dimensionSettings.setLayout(optionsLayout)
 
 
@@ -75,5 +73,6 @@ class Dialog(QDialog):
             self.mainWindow.handleReset()
 
         self.close()
+
 
 
